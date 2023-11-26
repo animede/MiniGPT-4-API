@@ -1,0 +1,57 @@
+Motivation 
+
+We have developed an API that conforms to several expected usage patterns to make it easy to use MiniGPT-4 and high-performance MiniGPT-v2 from various application software.
+
+Expected usage patterns
+
+Embed in an application and use the inference code by calling it. Use a class that summarizes the processing required for inference, not an API.
+Separate MiniGPT-4/v2 from the application and run it in a different process to use it via the ASGI web server API, but only if the user (or application) is single.
+Run as a generic ASGI web server API that supports multiple users/multiple session annotations 1), providing services to multiple clients or using multiple sessions from a single client (or application). Note 1) Here, a session refers to a series of chat-style operations performed while executing a task based on an uploaded image. This includes re-uploading the same or different images during the process.
+For 1), we provide minigpt-v2-func.py, which summarizes each STEP for inference by accessing LLM, and function.py, which summarizes the necessary functions. For 2), we provide minigpt-v2-api.py, which provides the ASCIweb server API with FastAPI and function.py, which summarizes the functions. For 3), we provide minigpt-v2-api_r2.py, which provides the ASCIweb server API with FastAPI, class_chat_session.py, which manages sessions, and function.py, which summarizes the functions.
+
+Source code
+It is summarized in the API folder.
+| - embedded 
+| 　　| - minigpt-v2-func.py 
+| 　　| - function.py 
+| 　　| - API_single_settion 
+| 　　　　| - minigpt-v2-api.py 
+| 　　　　| - function.py 
+| 　　　　| - client 
+| 　　　　| - client_reset.py 
+| 　　　　| - client_upload.py 
+| 　　　　| - client_ask.py 
+| 　　　　| - clieant_steram_ans.py 
+|　　　　 | - client_viz.py 
+| 　　　　| - client_api.py 
+| 　　　　| - client_v2_gui.py 
+| - API_multi_settion 
+| 　　| - minigpt-v2-api_r2.py 
+| 　　| - class_chat_session.py 
+| 　　| - function.py 
+| 　　| - client 
+| 　　　　 | - clieant_reset_s.py 
+| 　　　　 | - client_upload_s.py 
+| 　　　　 | - client_ask_s.py 
+| 　　　　 | - clieant_steram_ans_s.py 
+| 　　　　 | - client_viz_s.py 
+| 　　　　 | - class_client_api.py 
+| 　　　　 | - client_v2_r2_gui_c.py
+
+Operating environment Set up the environment so that the original Minigpt4-v2 can run. The download of the model and checkpoint is also the same as the original. In addition, two types of cfg files are modified. Please refer to the note article. Furthermore, to add an API, pip inatall fastapi Introduce the FastAPI module.
+
+How to run The MiniGPT series is generally executed in the following order. Reset→upload→ask→ans→visualization
+
+Start the server The host address is 0.0.0.0:8001 by default. Rewrite it appropriately. By default, you can access it on the local host. Pass the above folder path or copy all the programs in the subfolder to the repository maine. Open a terminal, activate the environment, and move the directory to MiniGPT-4. 
+
+conda activate minigptv
+cd MiniGPT-4
+
+Command
+Single session server startup command pyton minigpt-v2-api.py Multi-session server startup command pyton minigpt-v2-api_r2.py Test Open a new terminal and activate the minigptv environment and move to the directory. conda activate minigptv cd MiniGPT-4
+
+Single session test Execute the following in order. An image with detected bounding boxes will be displayed. client_reset.py client_upload.py client_ask.py clieant_steram_ans.py client_viz.py GUI startup client_v2_gui.py When you access the displayed IP address, the app will start. The usage is the same as the demo version, but you must upload an image. Please upload with the upload button.
+
+Multi-session test Execute the following in order. After client_reset.py is executed, the session key is displayed, so copy and modify the key displayed for each subsequent program. If all executions are successful, an image with detected bounding boxes will be displayed. client_reset.py client_upload.py client_ask.py clieant_steram_ans.py client_viz.py GUI startup client_v2_r2_gui_c.py When you access the displayed IP address, the app will start. The usage is the same as the demo version, but you must upload an image. If you want to start a new session, click the reset button. This program supports multi-session, so you can open multiple terminals and start the above programs to handle different images respectively.
+
+API If you want to use it from a user program after starting the server client_api.py or class_client_api.py You can import and use it. In the case of client_api.py, it is not a class but a group of functions, so you need to import it as follows. If you create an instance of the class in class_client_api.py, you can call the internal processing. The following is the specification of the client-side API. Since the server is FastAPI, the API specification is displayed with /docs, so please refer to it.
