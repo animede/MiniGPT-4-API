@@ -1,0 +1,103 @@
+MiniGPT4-API
+
+モチベーション
+MiniGPT-4及び、高機能なMiniGPT-v2を様々なアプリケーションソフトウエアから容易に利用するために、想定される複数の利用法に沿うAPIを準備し、このソフトウエアを多くの方に利用していただけるよう、開発しました。
+想定する利用形態
+１）	アプリケーションに組込み、推論コードを呼び出して利用する。
+APIではなく、推論に必要な処理をまとめたクラスを利用します。
+２）	アプリケーションからMiniGPT-4/v2を分離し、別の異なるプロセスで動かしてASGI-webサーバのAPI経由で利用するが、ユーザー（又はアプリ）が単一の場合）
+３）	複数ユーザー・複数セッション注1）対応の汎用ASGI-webサーバAPIとして稼働させ、複数のクライアントにサービスを提供したり、単一のクライアント（又はアプリケーション）から複数セッションを利用するような用途。
+注1）	ここでのセッションとはアップロードされた画像を元にして、タスクを実行しながら行うチャット形式の一連の操作を指します。途中で同一又は異なる画像の再アップロードをすすることも含みます。
+１）	に対してはLLMにアクセスして推論させる各STEPをまとめたminigpt-v2-func.pyと必要な関数群をまとめたfunction.pyを提供します。
+２）	に対しては、ASCIwebサーバAPIをFastAPIで提供する、minigpt-v2-api.pyと関数群をまとめたfunction.pyを提供します。
+３）	に対しては、ASCIwebサーバAPIをFastAPIで提供する、minigpt-v2-api_r2.py、セッション管理クラスのclass_chat_session.py及び関数群をまとめたfunction.pyを提供します。
+
+ソースコード
+APIフォルダに纏めています。
+| - embedded
+|　　　| - minigpt-v2-func.py
+|　　　| - function.py
+| - API_single_settion
+|　　　| - minigpt-v2-api.py
+|　　　| - function.py
+|      | - client
+|          | - client_reset.py
+|          | - client_upload.py
+|          | - client_ask.py
+|          | -clieant_steram_ans.py
+|          | - client_viz.py
+|          | - client_api.py
+|          | - client_v2_gui.py
+| - API_multi_settion
+       | - minigpt-v2-api_r2.py
+　　　 | - class_chat_session.py
+       | - function.py
+       | - client
+            | - clieant_reset_s.py
+            | - client_upload_s.py
+            | - client_ask_s.py
+            | - clieant_steram_ans_s.py
+            | - client_viz_s.py
+            | - class_client_api.py
+            | - client_v2_r2_gui_c.py
+	
+動作環境
+オリジナルのMinigpt4-v2が動くように環境を構築します。
+モデルやcheckpointのダウンロードもオリジナル通りです。さらに2種類のcfgファイルも修正しておきます。noteの記事を参考にしてください。
+さらにAPIを追加するために、
+pip inatall fastapi
+でFastAPIモジュールを導入します。
+
+動かし方
+MiniGPTシリーズは概ね以下の順にプロシジャーが実行されます。
+Reset→upload→ask→ans→visualization
+
+サーバを起動
+ホストアドレスはデフォルトでは0.0.0.0:8001になっています。適切に書き換えてください。
+デフォルトではローカルホストでアクセスできます。上記フィルダーにパスを通すか、サブフォルダ内のプログラムを全てリポジトリmaineにコピーします。
+ターミナルを開き環境を有効化し、ディレクトリをMiniGPT-4へ移動
+conda activate minigptv
+cd MiniGPT-4
+
+コマンド
+シングルセッションの場合のサーバ起動
+pyton minigpt-v2-api.py
+マルチセッションの場合のサーバ起動
+pyton minigpt-v2-api_r2.py
+テスト
+新たにターミナルを開き、minigptv環境の有効化とディレクトリ移動をします。
+conda activate minigptv
+cd MiniGPT-4
+
+シングルセッションの場合のテスト
+以下順次実行しす。検出したバウンディングボックス付き画像が表示されます。
+client_reset.py
+client_upload.py
+client_ask.py
+clieant_steram_ans.py
+client_viz.py
+GUIの起動
+client_v2_gui.py
+表示されたIPアドレスにクセスするとアプリが起動します。使い方はDemo版と同じすが、必ず画像のアップ―ドをする必要があります。uploadボタンでアップロードしてください。
+
+マルチセッションの場合のテスト
+以下順次実行しす。client_reset.py実行後、セッションkeyが表示されるので、その後の各プログラムのkeyを表示されたkeyをコピーしてっ修正しておいてください。全て実行が成功すると、検出したバウンディングボックス付き画像が表示されます。
+client_reset.py
+client_upload.py
+client_ask.py
+clieant_steram_ans.py
+client_viz.py
+GUIの起動
+client_v2_r2_gui_c.py
+表示されたIPアドレスにクセスするとアプリが起動します。使い方はDemo版と同じすが、必ず画像のアップ―ドをする必要があります。uploadボタンでアップロードしてください。また新たなセッションを開始する場合はresetボタンをクリックしてください。
+このプログラムはマルチセッション対応なので、複数のターミナルを開いて上記プログラムを起動して各々異なる画像を扱うことができます。
+
+API
+ユーザープリグラムから利用する場合はサーバを起動後
+client_api.py
+又は
+class_client_api.py
+をimportしてご利用できます。client_api.pyの場合はclassではなく関数群なので以下のようにimportする必要があります。
+class_client_api.pyの場合はクラスのインスタンスを作成すれば、内部の処理を呼び出すことができます。
+以下はClient側APIの仕様です。サーバがFastAPIなので/docsでAPIの仕様が表示されますので参考にしてください。
+
